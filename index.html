@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Floating FAQ Chatbot with Animated Toggle & Icon</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f1f1;
+      margin: 0;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Floating Chat Button */
+    #chatToggleBtn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      background-color: #007bff;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      color: white;
+      font-size: 30px;
+      text-align: center;
+      line-height: 60px;
+      cursor: pointer;
+      user-select: none;
+      z-index: 1001;
+      transition:
+        background-color 0.3s,
+        transform 0.3s,
+        opacity 0.3s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #chatToggleBtn:hover {
+      background-color: #0056b3;
+    }
+
+    /* Icon inside button for animation */
+    #chatToggleIcon {
+      display: inline-block;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    /* Chat Window Container with transition */
+    #chatWindow {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 400px;
+      max-height: 500px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    /* Visible state */
+    #chatWindow.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Chat header */
+    #chatHeader {
+      background-color: #007bff;
+      color: white;
+      padding: 15px;
+      font-weight: bold;
+      font-size: 18px;
+      border-radius: 15px 15px 0 0;
+      user-select: none;
+    }
+
+    /* Chat messages container */
+    .chat-container {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background: #fafafa;
+    }
+
+    /* Input container */
+    .input-container {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 15px;
+      font-size: 16px;
+      border: none;
+      outline: none;
+      border-radius: 0 0 0 15px;
+    }
+
+    button.sendBtn {
+      padding: 12px 20px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 0 0 15px 0;
+      transition: background-color 0.3s;
+    }
+    button.sendBtn:hover {
+      background-color: #0056b3;
+    }
+
+    /* Messages */
+    .message {
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 20px;
+      max-width: 75%;
+      white-space: pre-wrap;
+      animation: fadeIn 0.3s ease-in-out;
+      word-wrap: break-word;
+    }
+
+    .user {
+      background: #d1e7dd;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .bot {
+      background: #f8d7da;
+      align-self: flex-start;
+      margin-right: auto;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Floating chat button -->
+<div id="chatToggleBtn" title="Open Chat" aria-label="Toggle chat">
+  <span id="chatToggleIcon">💬</span>
+</div>
+
+<!-- Floating chat window -->
+<div id="chatWindow" role="dialog" aria-modal="true" aria-labelledby="chatHeader">
+  <div id="chatHeader">FAQ Chatbot</div>
+  <div class="chat-container" id="chatBox"></div>
+  <div class="input-container">
+    <input type="text" id="userInput" placeholder="Ask a question..." autocomplete="off" />
+    <button class="sendBtn" id="sendBtn">Send</button>
+  </div>
+</div>
+
+<script>
+  const faqChatData = [
+    { question: "What is JavaScript?", answer: "JavaScript is a programming language used to create dynamic and interactive content on websites." },
+    { question: "What is the difference between == and ===?", answer: "`==` checks for value equality with type coercion, while `===` checks for both value and type equality." },
+    { question: "How can I create a function in JavaScript?", answer: "You can create a function using the `function` keyword or using arrow functions like `() => {}`." },
+    { question: "What is an array?", answer: "An array is a special variable that can hold more than one value at a time." }
+  ];
+
+  const chatToggleBtn = document.getElementById('chatToggleBtn');
+  const chatToggleIcon = document.getElementById('chatToggleIcon');
+  const chatWindow = document.getElementById('chatWindow');
+  const chatBox = document.getElementById('chatBox');
+  const userInput = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  // Animate icon change smoothly
+  function changeIcon(newIcon, newTitle) {
+    // Animate icon out
+    chatToggleIcon.style.opacity = 0;
+    chatToggleIcon.style.transform = "scale(0.3)";
+    
+    setTimeout(() => {
+      chatToggleIcon.textContent = newIcon;
+      chatToggleBtn.title = newTitle;
+      // Animate icon in
+      chatToggleIcon.style.opacity = 1;
+      chatToggleIcon.style.transform = "scale(1)";
+    }, 300);
+  }
+
+  // Toggle chat window visibility & update button icon/title with animation
+  chatToggleBtn.addEventListener('click', () => {
+    if (chatWindow.classList.contains('open')) {
+      chatWindow.classList.remove('open');
+      changeIcon("💬", "Open Chat");
+    } else {
+      chatWindow.classList.add('open');
+      changeIcon("❌", "Close Chat");
+      userInput.focus();
+    }
+  });
+
+  // Append message to chat
+  function appendMessage(sender, message = "") {
+    const msg = document.createElement("div");
+    msg.classList.add("message", sender);
+    msg.textContent = message;
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return msg;
+  }
+
+  // Typewriter effect for bot reply
+  function showTypewriterReply(reply) {
+    const msgElement = appendMessage("bot", "");
+    let index = 0;
+
+    function typeChar() {
+      if (index < reply.length) {
+        msgElement.textContent += reply.charAt(index);
+        index++;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        setTimeout(typeChar, 30);
+      }
+    }
+
+    setTimeout(typeChar, 300);
+  }
+
+  // Keyword matching logic with max keyword overlap
+  function handleUserInput() {
+    const input = userInput.value.trim();
+    if (input === "") return;
+
+    appendMessage("user", input);
+    userInput.value = "";
+
+    function getKeywords(text) {
+      return text
+        .toLowerCase()
+        .replace(/[.,!?]/g, '')
+        .split(/\s+/)
+        .filter(word => word.length > 2);
+    }
+
+    const inputKeywords = getKeywords(input);
+
+    let bestMatch = null;
+    let maxOverlap = 0;
+
+    faqChatData.forEach(faq => {
+      const faqKeywords = getKeywords(faq.question);
+      const overlap = faqKeywords.filter(word => inputKeywords.includes(word)).length;
+
+      if (overlap > maxOverlap) {
+        maxOverlap = overlap;
+        bestMatch = faq;
+      }
+    });
+
+    const threshold = 1; // minimum keywords matched to reply
+    const botReply = (bestMatch && maxOverlap >= threshold)
+      ? bestMatch.answer
+      : "Sorry, I don't know the answer to that yet.";
+
+    showTypewriterReply(botReply);
+  }
+
+  // Send message on button click or Enter press
+  sendBtn.addEventListener('click', handleUserInput);
+  userInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      handleUserInput();
+    }
+  });
+</script>
+
+</body>
+</html>

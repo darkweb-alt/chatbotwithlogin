@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Login Page with Chatbot</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f1f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    position: relative;
+  }
+  .login-container {
+    background: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    width: 350px;
+  }
+  .login-container h2 {
+    text-align: center;
+  }
+  .login-container input,
+  .login-container button {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  .login-container button {
+    background: #007bff;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .login-container button:hover {
+    background: #0056b3;
+  }
+  #chatToggleBtn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: #007bff;
+    border-radius: 50%;
+    color: white;
+    font-size: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1001;
+  }
+  #chatToggleBtn:hover {
+    background: #0056b3;
+  }
+  #chatWindow {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 350px;
+    max-height: 500px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+  #chatWindow.open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  #chatHeader {
+    background: #007bff;
+    color: white;
+    padding: 15px;
+    font-weight: bold;
+  }
+  .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+  }
+  .message {
+    margin: 5px 0;
+    padding: 10px 15px;
+    border-radius: 20px;
+    max-width: 75%;
+    word-wrap: break-word;
+  }
+  .user {
+    background: #d1e7dd;
+    align-self: flex-end;
+    text-align: right;
+  }
+  .bot {
+    background: #f8d7da;
+    align-self: flex-start;
+    text-align: left;
+  }
+  .input-container {
+    display: flex;
+  }
+  .input-container input {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    font-size: 14px;
+  }
+  .input-container button {
+    border: none;
+    background: #007bff;
+    color: white;
+    padding: 10px 15px;
+    cursor: pointer;
+  }
+  .input-container button:hover {
+    background: #0056b3;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <h2>Login</h2>
+  <form>
+    <input type="text" placeholder="Username" required />
+    <input type="password" placeholder="Password" required />
+    <button type="submit">Login</button>
+  </form>
+</div>
+
+<div id="chatToggleBtn">💬</div>
+
+<div id="chatWindow">
+  <div id="chatHeader">FAQ Chatbot</div>
+  <div class="chat-container" id="chatBox"></div>
+  <div class="input-container">
+    <input type="text" id="userInput" placeholder="Type your question..." />
+    <button id="sendBtn">Send</button>
+  </div>
+</div>
+
+<script>
+const faqChatData =data.js [
+  { question: "hello", answer: "Hi there! How can I help you today?" },
+  { question: "hi", answer: "Hello! Ask me anything you want." },
+  { question: "who is pitambar", answer: "Pitambar is a brilliant Computer Science student and a rising tech leader! 🚀" },
+  { question: "what is javascript", answer: "JavaScript is a programming language used to create interactive websites." },
+  { question: "who is sowmya ?", answer: "Sowmya is a student" }
+];
+
+const chatToggleBtn = document.getElementById("chatToggleBtn");
+const chatWindow = document.getElementById("chatWindow");
+const chatBox = document.getElementById("chatBox");
+const userInput = document.getElementById("userInput");
+const sendBtn = document.getElementById("sendBtn");
+
+chatToggleBtn.addEventListener("click", () => {
+  chatWindow.classList.toggle("open");
+  userInput.focus();
+});
+
+function appendMessage(sender, text) {
+  const msg = document.createElement("div");
+  msg.className = `message ${sender}`;
+  msg.textContent = text;
+  chatBox.appendChild(msg);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function showTypewriterReply(text) {
+  const el = document.createElement("div");
+  el.className = "message bot";
+  chatBox.appendChild(el);
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      el.textContent += text[i];
+      i++;
+      chatBox.scrollTop = chatBox.scrollHeight;
+      setTimeout(type, 30);
+    }
+  }
+  type();
+}
+
+function handleUserInput() {
+  const input = userInput.value.trim();
+  if (!input) return;
+  appendMessage("user", input);
+  userInput.value = "";
+
+  const inputLower = input.toLowerCase();
+  let matched = false;
+
+  for (let faq of faqChatData) {
+    if (inputLower.includes(faq.question)) {
+      showTypewriterReply(faq.answer);
+      matched = true;
+      break;
+    }
+  }
+
+  if (!matched) {
+    showTypewriterReply("Sorry, I don't know the answer to that yet.");
+  }
+}
+
+sendBtn.addEventListener("click", handleUserInput);
+userInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") handleUserInput();
+});
+</script>
+
+</body>
+</html>
